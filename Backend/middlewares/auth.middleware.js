@@ -62,6 +62,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const BlacklistToken = require("../models/blacklistToken.model");
 const captainModel = require("../models/captain.model");
+const userModel = require("../models/user.model");
 
 // =========================
 // USER AUTH MIDDLEWARE
