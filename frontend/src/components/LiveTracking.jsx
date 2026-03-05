@@ -1,69 +1,64 @@
-import React, { useState, useEffect } from 'react'
-import { LoadScript, GoogleMap, Marker } from '@react-google-maps/api'
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const containerStyle = {
-    width: '100%',
-    height: '100%',
-};
+const center = { lat: 52.52, lng: 13.405 };
 
-const center = {
-    lat: -3.745,
-    lng: -38.523
-};
+function ChangeView({ center, zoom }) {
+    const map = useMap();
+    useEffect(() => {
+        map.setView(center, zoom);
+    }, [map, center, zoom]);
+    return null;
+}
+
+const defaultIcon = L.icon({
+    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+});
 
 const LiveTracking = () => {
-    const [ currentPosition, setCurrentPosition ] = useState(center);
+    const [position, setPosition] = useState(center);
 
     useEffect(() => {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const { latitude, longitude } = position.coords;
-            setCurrentPosition({
-                lat: latitude,
-                lng: longitude
-            });
-        });
+        if (!navigator.geolocation) return;
 
-        const watchId = navigator.geolocation.watchPosition((position) => {
-            const { latitude, longitude } = position.coords;
-            setCurrentPosition({
-                lat: latitude,
-                lng: longitude
-            });
-        });
-
-        return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
-
-    useEffect(() => {
-        const updatePosition = () => {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const { latitude, longitude } = position.coords;
-
-                console.log('Position updated:', latitude, longitude);
-                setCurrentPosition({
-                    lat: latitude,
-                    lng: longitude
-                });
+        const updatePosition = (pos) => {
+            setPosition({
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
             });
         };
 
-        updatePosition(); // Initial position update
-
-        const intervalId = setInterval(updatePosition, 1000); // Update every 10 seconds
-
+        navigator.geolocation.getCurrentPosition(updatePosition);
+        const watchId = navigator.geolocation.watchPosition(updatePosition);
+        return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
     return (
-        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-            <GoogleMap
-                mapContainerStyle={containerStyle}
-                center={currentPosition}
+        <div className="w-full h-full min-h-[300px] rounded overflow-hidden">
+            <MapContainer
+                center={position}
                 zoom={15}
+                className="w-full h-full"
+                style={{ minHeight: '300px' }}
+                scrollWheelZoom
             >
-                <Marker position={currentPosition} />
-            </GoogleMap>
-        </LoadScript>
-    )
-}
+                <ChangeView center={position} zoom={15} />
+                <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={position} icon={defaultIcon}>
+                    <Popup>You are here</Popup>
+                </Marker>
+            </MapContainer>
+        </div>
+    );
+};
 
-export default LiveTracking
+export default LiveTracking;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CaptainDataContext } from '../context/CapatainContext'
+import { CaptainDataContext } from '../context/CaptainContext'
+import { API_BASE } from '../config'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
@@ -17,13 +18,13 @@ const CaptainSignup = () => {
   const [ vehiclePlate, setVehiclePlate ] = useState('')
   const [ vehicleCapacity, setVehicleCapacity ] = useState('')
   const [ vehicleType, setVehicleType ] = useState('')
+  const [ error, setError ] = useState('')
 
-
-  const { captain, setCaptain } = React.useContext(CaptainDataContext)
-
+  const { setCaptain } = React.useContext(CaptainDataContext)
 
   const submitHandler = async (e) => {
     e.preventDefault()
+    setError('')
     const captainData = {
       fullname: {
         firstname: firstName,
@@ -38,16 +39,18 @@ const CaptainSignup = () => {
         vehicleType: vehicleType
       }
     }
-
-    const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/captains/register`, captainData)
-
-    if (response.status === 201) {
-      const data = response.data
-      setCaptain(data.captain)
-      localStorage.setItem('token', data.token)
-      navigate('/captain-home')
+    try {
+      const response = await axios.post(`${API_BASE}/captains/register`, captainData)
+      if (response.status === 201) {
+        const data = response.data
+        setCaptain(data.captain)
+        localStorage.setItem('token', data.token)
+        navigate('/captain-home')
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Registration failed. Please try again.'
+      setError(msg)
     }
-
     setEmail('')
     setFirstName('')
     setLastName('')
@@ -56,7 +59,6 @@ const CaptainSignup = () => {
     setVehiclePlate('')
     setVehicleCapacity('')
     setVehicleType('')
-
   }
   return (
     <div className='py-5 px-5 h-screen flex flex-col justify-between'>
@@ -164,6 +166,7 @@ const CaptainSignup = () => {
             </select>
           </div>
 
+          {error && <p className='text-red-600 text-sm mb-2'>{error}</p>}
           <button
             className='bg-[#111] text-white font-semibold mb-3 rounded-lg px-4 py-2 w-full text-lg placeholder:text-base'
           >Create Captain Account</button>

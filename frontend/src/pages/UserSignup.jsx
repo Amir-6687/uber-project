@@ -2,20 +2,21 @@ import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { UserDataContext } from "../context/UserContext";
+import { API_BASE } from "../config";
 
 const UserSignup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [userData, setUserData] = useState({});
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
-
-  const { user, setUser } = useContext(UserDataContext);
+  const { setUser } = useContext(UserDataContext);
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    setError("");
     const newUser = {
       fullname: {
         firstname: firstName,
@@ -24,19 +25,21 @@ const UserSignup = () => {
       email: email,
       password: password,
     };
-
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/users/register`,
-      newUser,
-    );
-
-    if (response.status === 201) {
-      const data = response.data;
-      setUser(data.user);
-      localStorage.setItem("token", data.token);
-      navigate("/home");
+    try {
+      const response = await axios.post(
+        `${API_BASE}/users/register`,
+        newUser,
+      );
+      if (response.status === 201) {
+        const data = response.data;
+        setUser(data.user);
+        localStorage.setItem("token", data.token);
+        navigate("/home");
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || "Registration failed. Please try again.";
+      setError(msg);
     }
-
     setEmail("");
     setFirstName("");
     setLastName("");
@@ -108,6 +111,7 @@ const UserSignup = () => {
               placeholder="password"
             />
 
+            {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
             <button className="bg-[#111] text-white font-semibold mb-3 rounded-lg px-4 py-2 w-full text-lg placeholder:text-base">
               Create account
             </button>

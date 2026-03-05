@@ -1,32 +1,36 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import { API_BASE } from '../config'
 import { useNavigate } from 'react-router-dom'
 
 const ConfirmRidePopUp = (props) => {
     const [ otp, setOtp ] = useState('')
+    const [ error, setError ] = useState('')
     const navigate = useNavigate()
 
     const submitHander = async (e) => {
         e.preventDefault()
-
-        const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/rides/start-ride`, {
-            params: {
-                rideId: props.ride._id,
-                otp: otp
-            },
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
+        setError('')
+        try {
+            const response = await axios.get(`${API_BASE}/rides/start-ride`, {
+                params: {
+                    rideId: props.ride._id,
+                    otp: otp
+                },
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            if (response.status === 200) {
+                props.setConfirmRidePopupPanel(false)
+                props.setRidePopupPanel(false)
+                navigate('/captain-riding', { state: { ride: props.ride } })
             }
-        })
-
-        if (response.status === 200) {
-            props.setConfirmRidePopupPanel(false)
-            props.setRidePopupPanel(false)
-            navigate('/captain-riding', { state: { ride: props.ride } })
+        } catch (err) {
+            const msg = err.response?.data?.message || err.message || 'Could not start ride. Please try again.'
+            setError(msg)
         }
-
-
     }
     return (
         <div>
@@ -68,6 +72,7 @@ const ConfirmRidePopUp = (props) => {
 
                 <div className='mt-6 w-full'>
                     <form onSubmit={submitHander}>
+                        {error && <p className='text-red-600 text-sm mb-2'>{error}</p>}
                         <input value={otp} onChange={(e) => setOtp(e.target.value)} type="text" className='bg-[#eee] px-6 py-4 font-mono text-lg rounded-lg w-full mt-3' placeholder='Enter OTP' />
 
                         <button className='w-full mt-5 text-lg flex justify-center bg-green-600 text-white font-semibold p-3 rounded-lg'>Confirm</button>

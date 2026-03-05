@@ -3,7 +3,8 @@ import { io } from "socket.io-client";
 
 export const SocketContext = createContext();
 
-const socket = io(import.meta.env.VITE_SOCKET_URL, {
+const socketUrl = import.meta.env.VITE_SOCKET_URL || (typeof window !== "undefined" ? window.location.origin : "");
+const socket = io(socketUrl, {
   transports: ["websocket"],
 });
 

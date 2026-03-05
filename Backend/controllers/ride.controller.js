@@ -15,29 +15,21 @@ module.exports.createRide = async (req, res) => {
 
     try {
         const ride = await rideService.createRide({ user: req.user._id, pickup, destination, vehicleType });
-        res.status(201).json(ride);
 
         const pickupCoordinates = await mapService.getAddressCoordinate(pickup);
-
-
-
         const captainsInRadius = await mapService.getCaptainsInTheRadius(pickupCoordinates.ltd, pickupCoordinates.lng, 2);
-
-        ride.otp = ""
 
         const rideWithUser = await rideModel.findOne({ _id: ride._id }).populate('user');
 
-        captainsInRadius.map(captain => {
-
+        captainsInRadius.forEach(captain => {
             sendMessageToSocketId(captain.socketId, {
                 event: 'new-ride',
                 data: rideWithUser
-            })
+            });
+        });
 
-        })
-
+        return res.status(201).json(ride);
     } catch (err) {
-
         console.log(err);
         return res.status(500).json({ message: err.message });
     }
@@ -47,7 +39,8 @@ module.exports.createRide = async (req, res) => {
 module.exports.getFare = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        const msg = errors.array().map(e => e.msg).join(' ') || 'Pickup and destination must be at least 3 characters.';
+        return res.status(400).json({ message: msg, errors: errors.array() });
     }
 
     const { pickup, destination } = req.query;

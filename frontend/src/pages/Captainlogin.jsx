@@ -2,36 +2,37 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { CaptainDataContext } from '../context/CapatainContext'
+import { CaptainDataContext } from '../context/CaptainContext'
+import { API_BASE } from '../config'
 
 const Captainlogin = () => {
 
   const [ email, setEmail ] = useState('')
   const [ password, setPassword ] = useState('')
+  const [ error, setError ] = useState('')
 
-  const { captain, setCaptain } = React.useContext(CaptainDataContext)
+  const { setCaptain } = React.useContext(CaptainDataContext)
   const navigate = useNavigate()
 
-
-
   const submitHandler = async (e) => {
-    e.preventDefault();
-    const captain = {
+    e.preventDefault()
+    setError('')
+    const captainData = {
       email: email,
       password
     }
-
-    const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/captains/login`, captain)
-
-    if (response.status === 200) {
-      const data = response.data
-
-      setCaptain(data.captain)
-      localStorage.setItem('token', data.token)
-      navigate('/captain-home')
-
+    try {
+      const response = await axios.post(`${API_BASE}/captains/login`, captainData)
+      if (response.status === 200) {
+        const data = response.data
+        setCaptain(data.captain)
+        localStorage.setItem('token', data.token)
+        navigate('/captain-home')
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || err.message || 'Login failed. Please try again.'
+      setError(msg)
     }
-
     setEmail('')
     setPassword('')
   }
@@ -67,6 +68,7 @@ const Captainlogin = () => {
             placeholder='password'
           />
 
+          {error && <p className='text-red-600 text-sm mb-2'>{error}</p>}
           <button
             className='bg-[#111] text-white font-semibold mb-3 rounded-lg px-4 py-2 w-full text-lg placeholder:text-base'
           >Login</button>

@@ -7,14 +7,27 @@ import LiveTracking from '../components/LiveTracking'
 
 const Riding = () => {
     const location = useLocation()
-    const { ride } = location.state || {} // Retrieve ride data
+    const { ride } = location.state || {}
     const { socket } = useContext(SocketContext)
     const navigate = useNavigate()
 
-    socket.on("ride-ended", () => {
-        navigate('/home')
-    })
+    useEffect(() => {
+        if (!location.state?.ride) {
+            navigate('/home', { replace: true })
+            return
+        }
+    }, [ location.state, navigate ])
 
+    useEffect(() => {
+        const onRideEnded = () => navigate('/home')
+        socket.on('ride-ended', onRideEnded)
+        return () => socket.off('ride-ended', onRideEnded)
+    }, [ socket, navigate ])
+
+
+    if (!location.state?.ride) {
+        return null
+    }
 
     return (
         <div className='h-screen'>

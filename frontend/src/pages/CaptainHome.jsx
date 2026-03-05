@@ -7,8 +7,9 @@ import gsap from 'gsap'
 import ConfirmRidePopUp from '../components/ConfirmRidePopUp'
 import { useEffect, useContext } from 'react'
 import { SocketContext } from '../context/SocketContext'
-import { CaptainDataContext } from '../context/CapatainContext'
+import { CaptainDataContext } from '../context/CaptainContext'
 import axios from 'axios'
+import { API_BASE } from '../config'
 
 const CaptainHome = () => {
 
@@ -18,11 +19,14 @@ const CaptainHome = () => {
     const ridePopupPanelRef = useRef(null)
     const confirmRidePopupPanelRef = useRef(null)
     const [ ride, setRide ] = useState(null)
+    const [ confirmError, setConfirmError ] = useState('')
 
     const { socket } = useContext(SocketContext)
     const { captain } = useContext(CaptainDataContext)
 
     useEffect(() => {
+        if (!captain?._id) return
+
         socket.emit('join', {
             userId: captain._id,
             userType: 'captain'
@@ -30,7 +34,6 @@ const CaptainHome = () => {
         const updateLocation = () => {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
-
                     socket.emit('update-location-captain', {
                         userId: captain._id,
                         location: {
@@ -45,33 +48,37 @@ const CaptainHome = () => {
         const locationInterval = setInterval(updateLocation, 10000)
         updateLocation()
 
-        // return () => clearInterval(locationInterval)
-    }, [])
+        return () => clearInterval(locationInterval)
+    }, [ captain?._id, socket ])
 
-    socket.on('new-ride', (data) => {
-
-        setRide(data)
-        setRidePopupPanel(true)
-
-    })
+    useEffect(() => {
+        const onNewRide = (data) => {
+            setRide(data)
+            setRidePopupPanel(true)
+        }
+        socket.on('new-ride', onNewRide)
+        return () => socket.off('new-ride', onNewRide)
+    }, [ socket ])
 
     async function confirmRide() {
-
-        const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/rides/confirm`, {
-
-            rideId: ride._id,
-            captainId: captain._id,
-
-
-        }, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
+        setConfirmError('')
+        try {
+            const response = await axios.post(`${API_BASE}/rides/confirm`, {
+                rideId: ride._id,
+                captainId: captain._id,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            if (response.status === 200) {
+                setRidePopupPanel(false)
+                setConfirmRidePopupPanel(true)
             }
-        })
-
-        setRidePopupPanel(false)
-        setConfirmRidePopupPanel(true)
-
+        } catch (err) {
+            const msg = err.response?.data?.message || err.message || 'Could not confirm ride. Please try again.'
+            setConfirmError(msg)
+        }
     }
 
 
@@ -103,7 +110,7 @@ const CaptainHome = () => {
         <div className='h-screen'>
             <div className='fixed p-6 top-0 flex items-center justify-between w-screen'>
                 <img className='w-16' src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="" />
-                <Link to='/captain-home' className=' h-10 w-10 bg-white flex items-center justify-center rounded-full'>
+                <Link to='/captain/logout' className=' h-10 w-10 bg-white flex items-center justify-center rounded-full'>
                     <i className="text-lg font-medium ri-logout-box-r-line"></i>
                 </Link>
             </div>
@@ -120,6 +127,7 @@ const CaptainHome = () => {
                     setRidePopupPanel={setRidePopupPanel}
                     setConfirmRidePopupPanel={setConfirmRidePopupPanel}
                     confirmRide={confirmRide}
+                    confirmError={confirmError}
                 />
             </div>
             <div ref={confirmRidePopupPanelRef} className='fixed w-full h-screen z-10 bottom-0 translate-y-full bg-white px-3 py-10 pt-12'>
