@@ -4,12 +4,32 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const center = { lat: 52.52, lng: 13.405 };
+const LOCATION_ZOOM = 16;
 
 function ChangeView({ center, zoom }) {
     const map = useMap();
     useEffect(() => {
         map.setView(center, zoom);
     }, [map, center, zoom]);
+    return null;
+}
+
+function LocateOnTrigger({ locateTrigger, onPositionUpdate }) {
+    const map = useMap();
+    useEffect(() => {
+        if (locateTrigger === 0) return;
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const newPos = { lat: latitude, lng: longitude };
+                map.flyTo([latitude, longitude], LOCATION_ZOOM, { duration: 600 });
+                if (onPositionUpdate) onPositionUpdate(newPos);
+            },
+            () => {},
+            { enableHighAccuracy: true }
+        );
+    }, [locateTrigger, map, onPositionUpdate]);
     return null;
 }
 
@@ -21,7 +41,7 @@ const defaultIcon = L.icon({
     iconAnchor: [12, 41],
 });
 
-const LiveTracking = () => {
+const LiveTracking = ({ locateTrigger = 0 }) => {
     const [position, setPosition] = useState(center);
 
     useEffect(() => {
@@ -40,7 +60,7 @@ const LiveTracking = () => {
     }, []);
 
     return (
-        <div className="w-full h-full min-h-[300px] rounded overflow-hidden">
+        <div className="w-full h-full min-h-[300px] rounded overflow-hidden relative">
             <MapContainer
                 center={position}
                 zoom={15}
@@ -56,6 +76,7 @@ const LiveTracking = () => {
                 <Marker position={position} icon={defaultIcon}>
                     <Popup>You are here</Popup>
                 </Marker>
+                <LocateOnTrigger locateTrigger={locateTrigger} onPositionUpdate={setPosition} />
             </MapContainer>
         </div>
     );

@@ -16,6 +16,7 @@ import UserMenu from '../components/UserMenu';
 import { API_BASE } from '../config';
 
 const Home = () => {
+    const [ locateTrigger, setLocateTrigger ] = useState(0)
     const [ pickup, setPickup ] = useState('')
     const [ destination, setDestination ] = useState('')
     const [ panelOpen, setPanelOpen ] = useState(false)
@@ -230,8 +231,16 @@ const Home = () => {
             <img className='w-16 absolute left-5 top-5 z-10' src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="" />
             <UserMenu />
             <div className='h-screen w-screen relative z-0'>
-                <LiveTracking />
+                <LiveTracking locateTrigger={locateTrigger} />
             </div>
+            <button
+                type="button"
+                onClick={() => setLocateTrigger((t) => t + 1)}
+                className="absolute bottom-[300px] right-5 z-20 h-12 w-12 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 active:scale-95"
+                aria-label="Center on my location"
+            >
+                <i className="ri-focus-3-line text-2xl text-gray-700"></i>
+            </button>
             <div className='flex flex-col justify-end h-screen absolute inset-0 w-full z-10 pointer-events-none'>
                 <div className='p-6 bg-white relative pointer-events-auto rounded-t-2xl shadow-lg min-h-[280px]'>
                     <h5 ref={panelCloseRef} onClick={() => {
