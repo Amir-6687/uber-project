@@ -1,5 +1,5 @@
-import React, { useState, useContext } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useContext, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { UserDataContext } from '../context/UserContext'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -12,6 +12,22 @@ const UserLogin = () => {
 
   const { setUser } = useContext(UserDataContext)
   const navigate = useNavigate()
+  const [ searchParams ] = useSearchParams()
+
+  useEffect(() => {
+    const token = searchParams.get('token')
+    const err = searchParams.get('error')
+    if (err) setError(decodeURIComponent(err.replace(/\+/g, ' ')))
+    if (token) {
+      localStorage.setItem('token', token)
+      axios.get(`${API_BASE}/users/profile`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => {
+          setUser(res.data)
+          navigate('/home', { replace: true })
+        })
+        .catch(() => setError('Session invalid'))
+    }
+  }, [ searchParams, setUser, navigate ])
 
   const submitHandler = async (e) => {
     e.preventDefault()
@@ -75,6 +91,21 @@ const UserLogin = () => {
 
         </form>
         <p className='text-center'>New here? <Link to='/signup' className='text-blue-600'>Create new Account</Link></p>
+
+        <div className='mt-6 flex flex-col gap-2'>
+          <a
+            href={`${API_BASE}/users/auth/google`}
+            className='flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg w-full'
+          >
+            <i className='ri-google-fill text-xl'></i> Continue with Google
+          </a>
+          <a
+            href={`${API_BASE}/users/auth/apple`}
+            className='flex items-center justify-center gap-2 bg-black text-white font-medium py-2.5 rounded-lg w-full'
+          >
+            <i className='ri-apple-fill text-xl'></i> Continue with Apple ID
+          </a>
+        </div>
       </div>
       <div>
         <Link

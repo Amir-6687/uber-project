@@ -55,6 +55,22 @@ const UserSignup = () => {
             alt=""
           />
 
+          <div className="flex flex-col gap-2 mb-6">
+            <a
+              href={`${API_BASE}/users/auth/google`}
+              className="flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium py-2.5 rounded-lg w-full"
+            >
+              <i className="ri-google-fill text-xl"></i> Continue with Google
+            </a>
+            <a
+              href={`${API_BASE}/users/auth/apple`}
+              className="flex items-center justify-center gap-2 bg-black text-white font-medium py-2.5 rounded-lg w-full"
+            >
+              <i className="ri-apple-fill text-xl"></i> Continue with Apple ID
+            </a>
+          </div>
+          <p className="text-center text-gray-500 text-sm mb-4">– or sign up with email –</p>
+
           <form
             onSubmit={(e) => {
               submitHandler(e);
