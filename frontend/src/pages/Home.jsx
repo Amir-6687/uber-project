@@ -12,6 +12,7 @@ import { useContext } from 'react';
 import { UserDataContext } from '../context/UserContext';
 import { useNavigate, Link } from 'react-router-dom';
 import LiveTracking from '../components/LiveTracking';
+import UserMenu from '../components/UserMenu';
 import { API_BASE } from '../config';
 
 const Home = () => {
@@ -226,10 +227,8 @@ const Home = () => {
 
     return (
         <div className='h-screen relative overflow-hidden'>
-            <img className='w-16 absolute left-5 top-5' src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="" />
-            <Link to='/user/logout' className='absolute right-5 top-5 h-10 w-10 bg-white flex items-center justify-center rounded-full' title='Log out'>
-                <i className='text-lg ri-logout-box-r-line'></i>
-            </Link>
+            <img className='w-16 absolute left-5 top-5 z-10' src="https://upload.wikimedia.org/wikipedia/commons/c/cc/Uber_logo_2018.png" alt="" />
+            <UserMenu />
             <div className='h-screen w-screen relative z-0'>
                 <LiveTracking />
             </div>
