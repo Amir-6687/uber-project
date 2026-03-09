@@ -22,9 +22,12 @@ module.exports.registerUser = async (req, res, next) => {
 
   const hashedPassword = await userModel.hashPassword(password);
 
+  // 🔥 اصلاح اصلی اینجاست
   const user = await userService.createUser({
-    firstname: fullname.firstname,
-    lastname: fullname.lastname,
+    fullname: {
+      firstname: fullname.firstname,
+      lastname: fullname.lastname,
+    },
     email,
     password: hashedPassword,
   });
@@ -145,87 +148,4 @@ module.exports.deleteUser = async (req, res, next) => {
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-};
-
-// =========================
-// GOOGLE OAUTH - redirect to Google
-// =========================
-module.exports.googleAuth = (req, res) => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5174";
-  if (!clientId) {
-    return res.redirect(`${frontendUrl}/login?error=Google+sign-in+not+configured`);
-  }
-  const redirectUri = `${process.env.BACKEND_URL || "http://localhost:3000"}/users/auth/google/callback`;
-  const scope = "openid email profile";
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
-  res.redirect(url);
-};
-
-// =========================
-// GOOGLE OAUTH CALLBACK
-// =========================
-module.exports.googleAuthCallback = async (req, res) => {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5174";
-  const backendUrl = process.env.BACKEND_URL || "http://localhost:3000";
-  const { code } = req.query;
-  if (!code) {
-    return res.redirect(`${frontendUrl}/login?error=No+code`);
-  }
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
-    return res.redirect(`${frontendUrl}/login?error=Google+not+configured`);
-  }
-  const redirectUri = `${backendUrl}/users/auth/google/callback`;
-  try {
-    const tokenRes = await axios.post("https://oauth2.googleapis.com/token", new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      grant_type: "authorization_code",
-    }), { headers: { "Content-Type": "application/x-www-form-urlencoded" } });
-    const accessToken = tokenRes.data.access_token;
-    const userRes = await axios.get("https://www.googleapis.com/oauth2/v2/userinfo", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const { email, given_name, family_name } = userRes.data;
-    let user = await userModel.findOne({ email });
-    if (!user) {
-      const hashed = await userModel.hashPassword(require("crypto").randomBytes(16).toString("hex"));
-      user = await userModel.create({
-        fullname: { firstname: given_name || "User", lastname: family_name || "" },
-        email,
-        password: hashed,
-      });
-    }
-    const token = user.generateAuthToken();
-    res.redirect(`${frontendUrl}/login?token=${token}&email=${encodeURIComponent(user.email)}`);
-  } catch (err) {
-    console.error(err);
-    res.redirect(`${frontendUrl}/login?error=Google+sign-in+failed`);
-  }
-};
-
-// =========================
-// APPLE OAUTH - placeholder (needs Apple Developer setup)
-// =========================
-module.exports.appleAuth = (req, res) => {
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5174";
-  res.redirect(`${frontendUrl}/login?error=Apple+sign-in+coming+soon`);
-};
-
-// =========================
-// LOGOUT USER
-// =========================
-module.exports.logoutUser = async (req, res, next) => {
-  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
-
-  if (token) {
-    await BlacklistToken.create({ token });
-  }
-
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logged out" });
 };
