@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,11 +6,15 @@ import 'leaflet/dist/leaflet.css';
 const center = { lat: 52.52, lng: 13.405 };
 const LOCATION_ZOOM = 16;
 
-function ChangeView({ center, zoom }) {
+function InitialCenterOnce({ position, defaultCenter }) {
     const map = useMap();
+    const done = useRef(false);
     useEffect(() => {
-        map.setView(center, zoom);
-    }, [map, center, zoom]);
+        if (done.current) return;
+        if (!position || position.lat === defaultCenter.lat && position.lng === defaultCenter.lng) return;
+        done.current = true;
+        map.setView([position.lat, position.lng], 15);
+    }, [map, position, defaultCenter]);
     return null;
 }
 
@@ -19,16 +23,18 @@ function LocateOnTrigger({ locateTrigger, onPositionUpdate }) {
     useEffect(() => {
         if (locateTrigger === 0) return;
         if (!navigator.geolocation) return;
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude } = pos.coords;
-                const newPos = { lat: latitude, lng: longitude };
-                map.flyTo([latitude, longitude], LOCATION_ZOOM, { duration: 600 });
-                if (onPositionUpdate) onPositionUpdate(newPos);
-            },
-            () => {},
-            { enableHighAccuracy: true }
-        );
+        const onSuccess = (pos) => {
+            const { latitude, longitude } = pos.coords;
+            const newPos = { lat: latitude, lng: longitude };
+            map.flyTo([latitude, longitude], LOCATION_ZOOM, { duration: 800 });
+            onPositionUpdate(newPos);
+        };
+        const onError = () => {};
+        navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+        });
     }, [locateTrigger, map, onPositionUpdate]);
     return null;
 }
@@ -68,11 +74,11 @@ const LiveTracking = ({ locateTrigger = 0 }) => {
                 style={{ minHeight: '300px' }}
                 scrollWheelZoom
             >
-                <ChangeView center={position} zoom={15} />
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                <InitialCenterOnce position={position} defaultCenter={center} />
                 <Marker position={position} icon={defaultIcon}>
                     <Popup>You are here</Popup>
                 </Marker>

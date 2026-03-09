@@ -242,45 +242,52 @@ const Home = () => {
                 <i className="ri-focus-3-line text-2xl text-gray-700"></i>
             </button>
             <div className='flex flex-col justify-end h-screen absolute inset-0 w-full z-10 pointer-events-none'>
-                <div className='p-6 bg-white relative pointer-events-auto rounded-t-2xl shadow-lg min-h-[280px]'>
-                    <h5 ref={panelCloseRef} onClick={() => {
-                        setPanelOpen(false)
-                    }} className='absolute opacity-0 right-6 top-6 text-2xl'>
-                        <i className="ri-arrow-down-wide-line"></i>
+                <div className='relative pointer-events-auto rounded-t-3xl min-h-[300px] bg-white/95 backdrop-blur-md shadow-[0_-8px_32px_rgba(0,0,0,0.12)] border-t border-gray-100'>
+                    <div className='absolute left-1/2 -translate-x-1/2 top-3 w-12 h-1 rounded-full bg-gray-200' />
+                    <h5 ref={panelCloseRef} onClick={() => setPanelOpen(false)} className='absolute right-5 top-5 w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors'>
+                        <i className='ri-arrow-down-s-line text-xl' />
                     </h5>
-                    <h4 className='text-2xl font-semibold'>Find a trip</h4>
-                    <form className='relative py-3' onSubmit={(e) => {
-                        submitHandler(e)
-                    }}>
-                        <div className="line absolute h-16 w-1 top-[50%] -translate-y-1/2 left-5 bg-gray-700 rounded-full"></div>
-                        <input
-                            onClick={() => {
-                                setPanelOpen(true)
-                                setActiveField('pickup')
-                            }}
-                            value={pickup}
-                            onChange={handlePickupChange}
-                            className='bg-[#eee] px-12 py-2 text-lg rounded-lg w-full'
-                            type="text"
-                            placeholder='Add a pick-up location'
-                        />
-                        <input
-                            onClick={() => {
-                                setPanelOpen(true)
-                                setActiveField('destination')
-                            }}
-                            value={destination}
-                            onChange={handleDestinationChange}
-                            className='bg-[#eee] px-12 py-2 text-lg rounded-lg w-full  mt-3'
-                            type="text"
-                            placeholder='Enter your destination' />
-                    </form>
-                    {apiError && <p className='text-red-600 text-sm mt-2'>{apiError}</p>}
-                    <button
-                        onClick={findTrip}
-                        className='bg-black text-white px-4 py-2 rounded-lg mt-3 w-full'>
-                        Find Trip
-                    </button>
+                    <div className='px-5 pt-6 pb-8'>
+                        <h4 className='text-xl font-bold text-gray-900 tracking-tight mb-5'>Where to?</h4>
+                        <form className='space-y-0' onSubmit={(e) => submitHandler(e)}>
+                            <div className='rounded-xl border border-gray-200 bg-gray-50/80 overflow-hidden shadow-sm'>
+                                <label className='flex items-center gap-3 px-4 py-3.5 border-b border-gray-100'>
+                                    <span className='flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white'>
+                                        <i className='ri-circle-fill text-[8px]' />
+                                    </span>
+                                    <input
+                                        onClick={() => { setPanelOpen(true); setActiveField('pickup') }}
+                                        value={pickup}
+                                        onChange={handlePickupChange}
+                                        className='flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 text-[15px] font-medium outline-none'
+                                        type='text'
+                                        placeholder='Add pick-up location'
+                                    />
+                                </label>
+                                <label className='flex items-center gap-3 px-4 py-3.5'>
+                                    <span className='flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white'>
+                                        <i className='ri-map-pin-2-fill text-sm' />
+                                    </span>
+                                    <input
+                                        onClick={() => { setPanelOpen(true); setActiveField('destination') }}
+                                        value={destination}
+                                        onChange={handleDestinationChange}
+                                        className='flex-1 bg-transparent text-gray-900 placeholder:text-gray-400 text-[15px] font-medium outline-none'
+                                        type='text'
+                                        placeholder='Where to?'
+                                    />
+                                </label>
+                            </div>
+                            {apiError && <p className='text-red-500 text-sm mt-3 font-medium'>{apiError}</p>}
+                            <button
+                                type='button'
+                                onClick={findTrip}
+                                className='mt-5 w-full py-3.5 rounded-xl bg-gray-900 text-white font-semibold text-base shadow-lg shadow-gray-900/20 hover:bg-gray-800 active:scale-[0.98] transition-all duration-200'
+                            >
+                                Find Trip
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div ref={panelRef} className='bg-white h-0 overflow-hidden pointer-events-auto'>
                     <LocationSearchPanel
