@@ -12,7 +12,14 @@ const rideRoutes = require('./routes/ride.routes');
 
 connectToDb();
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+    origin: [
+        "https://uber-project-mu.vercel.app",   // دامنه Vercel
+        "http://localhost:5173"                 // برای توسعه
+    ],
+    credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
