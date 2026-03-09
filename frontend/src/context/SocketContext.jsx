@@ -1,10 +1,10 @@
 import React, { createContext, useEffect } from "react";
 import { io } from "socket.io-client";
+import { API_BASE } from "../config";
 
 export const SocketContext = createContext();
 
-const socketUrl = import.meta.env.VITE_SOCKET_URL || (typeof window !== "undefined" ? window.location.origin : "");
-const socket = io(socketUrl, {
+const socket = io(API_BASE, {
   transports: ["websocket"],
 });
 
